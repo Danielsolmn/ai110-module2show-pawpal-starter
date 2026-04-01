@@ -3,6 +3,7 @@ from pawpal_system import Task, Pet, Owner, Scheduler, Priority
 
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
 
+
 # --- Persistent state: initialize once, survive every rerun ---
 if "owner" not in st.session_state:
     st.session_state.owner = Owner(name="", available_minutes=60)
