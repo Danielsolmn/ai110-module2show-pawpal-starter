@@ -33,8 +33,11 @@ The second change was replacing the `priority` string field on `Task` with a `Pr
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+The conflict detector uses an O(n²) pairwise comparison — every task is checked against every other task. A more efficient approach would sort tasks by start time and use a sweep-line algorithm (O(n log n)), which would scale better for large numbers of tasks.
+
+However, I kept the simpler approach for two reasons. First, a real pet owner realistically schedules between 5 and 20 tasks per day. At that scale, the difference between O(n²) and O(n log n) is unmeasurable — the bottleneck is the owner's time, not the algorithm. Second, the pairwise loop is easier to read and verify: `combinations(entries, 2)` directly says "check every unique pair," and the overlap condition `a_start < b_end and b_start < a_end` is a standard interval test that any reader can trace in one pass. A sweep-line would require sorting state and an active-interval set, adding complexity with no practical benefit in this context.
+
+The tradeoff is: simplicity and readability over asymptotic efficiency. That is a reasonable choice when n is small and correctness is more important than raw performance.
 
 ---
 

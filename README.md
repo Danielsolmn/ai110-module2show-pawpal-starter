@@ -22,6 +22,18 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## Smarter Scheduling
+
+PawPal+ goes beyond a basic task list with four algorithmic features added to `pawpal_system.py`:
+
+**Sort by time** — `Scheduler.sort_by_time()` returns all pending tasks ordered chronologically. It uses Python's `sorted()` with a lambda key on each task's `"HH:MM"` string. Because the format is zero-padded 24-hour, lexicographic order matches chronological order with no datetime parsing needed.
+
+**Filter tasks** — `Scheduler.filter_tasks(completed, pet_name)` lets you slice the task list by completion status, by pet, or by both at once. Useful for showing only what still needs doing, or auditing a single pet's history.
+
+**Auto-reschedule** — `Task.reschedule()` returns a fresh copy of a task due on its next occurrence using Python's `timedelta`: daily tasks shift by 1 day, weekly tasks by 7 days, and `"as needed"` tasks are not rescheduled. `Scheduler.mark_task_complete()` wires this together — it marks the task done and appends the rescheduled copy to the same pet automatically.
+
+**Conflict detection** — `Scheduler.detect_conflicts()` checks every unique pair of pending tasks with `itertools.combinations` and reports any whose time windows overlap using the interval condition `a_start < b_end and b_start < a_end`. Warnings are returned as strings so the program never crashes — the owner sees the conflict and decides what to do.
+
 ## Getting started
 
 ### Setup
