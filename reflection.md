@@ -76,13 +76,12 @@ The test suite covers six categories of behavior:
 - **Edge cases** — `generate_plan()` returns an empty list when `available_minutes` is 0; two pets with identically named tasks are tracked independently and completing one does not affect the other; `reschedule()` advances from a past `due_date` correctly rather than defaulting to today.
 - **Baseline** — `mark_complete()` correctly sets `completed=True`, and `add_task()` increases the pet's task count.
 
-These tests mattered because the most dangerous bugs in a scheduling system are silent ones — a conflict that goes undetected, or a rescheduled task that gets added to the wrong pet. Testing boundary conditions (back-to-back times, zero available minutes, past due dates) catches the cases where off-by-one errors hide.
 
 **b. Confidence**
 
 **★★★★★ (5/5)**
 
-All core scheduling behaviors are tested across happy paths, boundary conditions, and invalid input. The back-to-back conflict boundary, "as needed" recurrence, zero available time, past due dates, and identical task descriptions across pets are all explicitly covered. The one remaining gap — the Streamlit UI layer in `app.py` — is a known limitation documented in the test file rather than an unknown blind spot.
+All core scheduling behaviors are tested across happy paths, boundary conditions, and invalid input. The back-to-back conflict boundary, "as needed" recurrence, zero available time, past due dates, and identical task descriptions across pets are all explicitly covered. 
 
 ---
 
@@ -96,7 +95,7 @@ The conflict detection using itertools.combinations turned out well. Once I unde
 
 **b. What you would improve**
 
-
+add more features ..like subtask 
 
 
 
