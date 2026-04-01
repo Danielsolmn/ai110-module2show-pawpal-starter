@@ -41,7 +41,7 @@ with col3:
 if st.button("Add pet"):
     if pet_name.strip():
         new_pet = Pet(name=pet_name.strip(), species=species, age=age)
-        st.session_state.owner.add_pet(new_pet)       # ← Phase 2 method
+        st.session_state.owner.add_pet(new_pet)
         st.session_state.pets = st.session_state.owner.pets
         st.success(f"{pet_name} added!")
     else:
@@ -65,13 +65,15 @@ else:
     with col2:
         task_desc = st.text_input("Task description", value="Morning walk")
 
-    col3, col4, col5 = st.columns(3)
+    col3, col4, col5, col6 = st.columns(4)
     with col3:
         duration = st.number_input("Duration (min)", min_value=1, max_value=240, value=20)
     with col4:
         priority_str = st.selectbox("Priority", ["high", "medium", "low"])
     with col5:
         frequency = st.selectbox("Frequency", ["daily", "weekly", "as needed"])
+    with col6:
+        task_time = st.text_input("Time (HH:MM)", value="09:00")
 
     if st.button("Add task"):
         if task_desc.strip():
@@ -81,8 +83,9 @@ else:
                 duration_minutes=int(duration),
                 priority=Priority(priority_str),
                 frequency=frequency,
+                time=task_time.strip(),
             )
-            target_pet.add_task(new_task)             # ← Phase 2 method
+            target_pet.add_task(new_task)
             st.success(f"Task '{task_desc}' added to {selected_pet}.")
         else:
             st.warning("Please enter a task description.")
@@ -92,10 +95,65 @@ else:
         if pet.tasks:
             st.markdown(f"**{pet.name}'s tasks:**")
             st.table([
-                {"Task": t.description, "Duration": t.duration_minutes,
-                 "Priority": t.priority.value, "Frequency": t.frequency}
+                {
+                    "Task": t.description,
+                    "Time": t.time,
+                    "Duration (min)": t.duration_minutes,
+                    "Priority": t.priority.value,
+                    "Frequency": t.frequency,
+                    "Done": "✅" if t.completed else "⬜",
+                }
                 for t in pet.tasks
             ])
+
+st.divider()
+
+# ── Conflict Check ────────────────────────────────────────────
+st.subheader("⚠️ Schedule Conflicts")
+
+if not st.session_state.owner.pets:
+    st.info("Add pets and tasks to check for conflicts.")
+else:
+    scheduler = Scheduler(st.session_state.owner)
+    conflicts = scheduler.detect_conflicts()
+
+    if not conflicts:
+        st.success("No conflicts found — your schedule looks clean!")
+    else:
+        st.error(
+            f"**{len(conflicts)} conflict{'s' if len(conflicts) > 1 else ''} detected.**  "
+            "Two or more tasks overlap in time. Adjust a task's start time or duration to resolve."
+        )
+        for warning in conflicts:
+            # Strip the leading "WARNING: " prefix for a cleaner display
+            message = warning.replace("WARNING: ", "")
+            st.warning(f"🔴 {message}")
+
+st.divider()
+
+# ── Tasks Sorted by Time ──────────────────────────────────────
+st.subheader("🕐 Today's Tasks by Time")
+
+if not st.session_state.owner.pets:
+    st.info("Add pets and tasks to see a sorted view.")
+else:
+    scheduler = Scheduler(st.session_state.owner)
+    sorted_tasks = scheduler.sort_by_time()
+
+    if not sorted_tasks:
+        st.info("No pending tasks to display.")
+    else:
+        st.caption(f"{len(sorted_tasks)} pending task(s), sorted chronologically.")
+        st.table([
+            {
+                "Time": t.time,
+                "Task": t.description,
+                "Duration (min)": t.duration_minutes,
+                "Priority": t.priority.value.upper(),
+                "Frequency": t.frequency,
+            }
+            for t in sorted_tasks
+        ])
 
 st.divider()
 
@@ -108,16 +166,31 @@ if st.button("Generate schedule"):
     elif not st.session_state.owner.pets:
         st.warning("Add at least one pet before generating a schedule.")
     else:
-        scheduler = Scheduler(st.session_state.owner)  # ← Phase 2 class
+        scheduler = Scheduler(st.session_state.owner)
+
+        # Surface conflicts at the top of the plan as well
+        conflicts = scheduler.detect_conflicts()
+        if conflicts:
+            st.warning(
+                f"⚠️ Heads up: {len(conflicts)} time conflict(s) exist in your task list. "
+                "The plan below selects by priority — consider fixing conflicts above."
+            )
+
         plan = scheduler.generate_plan()
         if plan:
-            st.success("Here's your plan for today:")
+            total = sum(t.duration_minutes for t in plan)
+            st.success(
+                f"Here's your plan for today — {total} of {st.session_state.owner.available_minutes} min used."
+            )
             st.table([
-                {"Task": t.description, "Duration (min)": t.duration_minutes,
-                 "Priority": t.priority.value, "Frequency": t.frequency}
+                {
+                    "Task": t.description,
+                    "Time": t.time,
+                    "Duration (min)": t.duration_minutes,
+                    "Priority": t.priority.value.upper(),
+                    "Frequency": t.frequency,
+                }
                 for t in plan
             ])
-            total = sum(t.duration_minutes for t in plan)
-            st.caption(f"Total: {total} / {st.session_state.owner.available_minutes} min available.")
         else:
             st.warning("No tasks fit within your available time.")

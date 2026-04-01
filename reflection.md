@@ -28,8 +28,11 @@ The second change was replacing the `priority` string field on `Task` with a `Pr
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+The scheduler considers three constraints: available time, task priority, and task frequency.
+
+Available time is the hard constraint — a task only enters the plan if it fits within the owner's remaining minutes. Priority determines order: HIGH tasks are scheduled first, then MEDIUM, then LOW, so the most important care always gets done even if time runs out. Frequency acts as a filter — tasks marked "daily" or "weekly" are auto-rescheduled after completion, while "as needed" tasks are one-time.
+
+ time and priority mattered most because they reflect real life: a busy owner can't do everything, so the system should help them do the right things first. Frequency came second because recurring tasks like feeding and medication are the ones most likely to be forgotten if not automatically queued up again.
 
 **b. Tradeoffs**
 
@@ -45,13 +48,18 @@ The tradeoff is: simplicity and readability over asymptotic efficiency. That is 
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+I used AI tools across every phase of the project, but the role shifted depending on the task.
+
+brainstorm methods , 
+understand what a code mean ... especially method that takes in different things 
+
+
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+The clearest moment of rejecting an AI suggestion was during the `reschedule()` method. An early suggestion put the rescheduling logic inside `Scheduler` as a standalone method that took both a task and a pet as arguments. I modified this by splitting the responsibility: `reschedule()` lives on `Task` (because it only needs the task's own data to compute the next date), while `mark_task_complete()` lives on `Scheduler` (because finding the right pet to append to requires access to `owner.pets`). The 
+
+I verified the split was correct by asking: "does this method need anything it doesn't already own?" If the answer was no, it belonged on that class.
 
 ---
 
@@ -59,13 +67,22 @@ The tradeoff is: simplicity and readability over asymptotic efficiency. That is 
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+The test suite covers six categories of behavior:
+
+- **Sorting correctness** — `sort_by_time()` returns tasks in chronological order, excludes completed tasks, and returns an empty list when no pending tasks exist.
+- **Recurrence logic** — daily tasks produce a new task due tomorrow, weekly tasks produce a new task due in 7 days, "as needed" tasks return `None`, and the rescheduled task is appended to the correct pet (not a different one).
+- **Conflict detection** — tasks at the same start time are flagged, overlapping windows are flagged, back-to-back tasks that touch but don't overlap are not flagged, completed tasks are excluded from conflict checks, and a single task never conflicts with itself.
+- **Invalid input** — `_to_minutes` is tested with valid HH:MM strings and confirmed to raise `ValueError` on malformed input like `"morning"` or `""`. This documents current behavior so future validation can be added to `app.py` at the input boundary.
+- **Edge cases** — `generate_plan()` returns an empty list when `available_minutes` is 0; two pets with identically named tasks are tracked independently and completing one does not affect the other; `reschedule()` advances from a past `due_date` correctly rather than defaulting to today.
+- **Baseline** — `mark_complete()` correctly sets `completed=True`, and `add_task()` increases the pet's task count.
+
+These tests mattered because the most dangerous bugs in a scheduling system are silent ones — a conflict that goes undetected, or a rescheduled task that gets added to the wrong pet. Testing boundary conditions (back-to-back times, zero available minutes, past due dates) catches the cases where off-by-one errors hide.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+**★★★★★ (5/5)**
+
+All core scheduling behaviors are tested across happy paths, boundary conditions, and invalid input. The back-to-back conflict boundary, "as needed" recurrence, zero available time, past due dates, and identical task descriptions across pets are all explicitly covered. The one remaining gap — the Streamlit UI layer in `app.py` — is a known limitation documented in the test file rather than an unknown blind spot.
 
 ---
 
@@ -73,12 +90,18 @@ The tradeoff is: simplicity and readability over asymptotic efficiency. That is 
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+
+
+The conflict detection using itertools.combinations turned out well. Once I understood that lexicographic HH:MM strings sort chronologically without any parsing, the whole approach from _to_minutes to the interval check came together in about ten lines that are easy to explain to anyone.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+
+
+
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+The most important thing I learned is that AI is most useful when you already know what you want. Giving it a more detailed prompt produces more quality code. 
+
+

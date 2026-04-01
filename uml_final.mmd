@@ -1,0 +1,57 @@
+classDiagram
+    direction TB
+
+    class Priority {
+        <<enumeration>>
+        LOW
+        MEDIUM
+        HIGH
+    }
+
+    class Task {
+        +str description
+        +int duration_minutes
+        +Priority priority
+        +str frequency
+        +bool completed
+        +str time
+        +date due_date
+        +is_high_priority() bool
+        +mark_complete() None
+        +reschedule() Task
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +int age
+        +str notes
+        +List~Task~ tasks
+        +add_task(task: Task) None
+        +get_pending_tasks() List~Task~
+    }
+
+    class Owner {
+        +str name
+        +int available_minutes
+        +str preferences
+        +List~Pet~ pets
+        +add_pet(pet: Pet) None
+        +get_all_tasks() List~Task~
+    }
+
+    class Scheduler {
+        +Owner owner
+        +detect_conflicts() List~str~
+        +mark_task_complete(task: Task) Task
+        +generate_plan() List~Task~
+        +sort_by_time() List~Task~
+        +filter_tasks(completed, pet_name) List~Task~
+        +explain_plan() str
+    }
+
+    Task --> Priority : uses
+    Pet "1" *-- "0..*" Task : owns
+    Owner "1" *-- "0..*" Pet : owns
+    Scheduler --> Owner : schedules for
+    Task ..> Task : reschedule() creates
